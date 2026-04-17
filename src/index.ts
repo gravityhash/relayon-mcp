@@ -6,7 +6,7 @@
 //   RELAYON_API_KEY=rl_live_... relayon-mcp
 //
 // Optional env:
-//   RELAYON_BASE_URL   REST base URL (default http://localhost:3000)
+//   RELAYON_BASE_URL   REST base URL (default https://mcp.relayon.io)
 //   RELAYON_TIMEOUT_MS Request timeout (default 15000)
 // =============================================
 
@@ -28,7 +28,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const baseUrl   = getEnv('RELAYON_BASE_URL', 'http://localhost:3000')!;
+  const baseUrl   = getEnv('RELAYON_BASE_URL', 'https://mcp.relayon.io')!;
   const timeoutMs = Number(getEnv('RELAYON_TIMEOUT_MS', '15000'));
 
   const client = new RelayonClient({ apiKey, baseUrl, timeoutMs });

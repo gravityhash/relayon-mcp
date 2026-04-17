@@ -39,8 +39,7 @@ npx @relayon/mcp
       "command": "npx",
       "args": ["-y", "@relayon/mcp"],
       "env": {
-        "RELAYON_API_KEY": "rl_live_...",
-        "RELAYON_BASE_URL": "https://api.relayon.io"
+        "RELAYON_API_KEY": "rl_live_..."
       }
     }
   }
@@ -83,7 +82,7 @@ npx @relayon/mcp
 | Variable | Required | Default | Notes |
 |---|---|---|---|
 | `RELAYON_API_KEY` | yes | — | Your `rl_live_...` key |
-| `RELAYON_BASE_URL` | no | `http://localhost:3000` | Point at your Relayon instance |
+| `RELAYON_BASE_URL` | no | `https://mcp.relayon.io` | Point at your Relayon instance |
 | `RELAYON_TIMEOUT_MS` | no | `15000` | Per-request HTTP timeout |
 
 ## Protocol
