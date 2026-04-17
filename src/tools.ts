@@ -60,6 +60,15 @@ export const TOOLS: ToolDef[] = [
         cron:     { type: 'string', description: 'Five-field cron expression. Mutually exclusive with delay and run_at.' },
         priority: { type: 'integer', minimum: 1, maximum: 4, default: 3, description: '1=critical, 4=low' },
         requires_approval: { type: 'boolean', default: false, description: 'Block execution until a human approves.' },
+        throttle: {
+          type: 'object',
+          description: 'Rate-limit requests to this endpoint. Prevents 429 storms on third-party APIs.',
+          properties: {
+            max_concurrent: { type: 'integer', minimum: 1, maximum: 1000, description: 'Max concurrent in-flight requests' },
+            max_per_second: { type: 'number', minimum: 0.1, maximum: 1000, description: 'Max requests per second' },
+            throttle_key: { type: 'string', description: 'Override throttle key (default: endpoint hostname)' },
+          },
+        },
       },
       required: ['endpoint'],
     },
@@ -75,6 +84,7 @@ export const TOOLS: ToolDef[] = [
         cron:     args.cron,
         priority: args.priority,
         requires_approval: args.requires_approval,
+        throttle: args.throttle,
       });
       const res = await client.createJob(input as Record<string, unknown>);
       const j = res.data;
@@ -188,6 +198,27 @@ export const TOOLS: ToolDef[] = [
     handler: async (client, args) => {
       const res = await client.approveJob(asString(args.id, 'id'));
       return `Job ${res.data.id} approved at ${res.data.approved_at} by ${res.data.approved_by}.`;
+    },
+  },
+
+  // ───────────────────────── get_job_attempts ─────────────────────────
+  {
+    name: 'get_job_attempts',
+    description: 'Fetch all execution attempts for a job, including full request/response details for debugging.',
+    inputSchema: {
+        type: 'object',
+        properties: { id: { type: 'string', description: 'Job UUID' } },
+        required: ['id'],
+    },
+    handler: async (client, args) => {
+        const res = await client.getJobAttempts(asString(args.id, 'id'));
+        if (res.data.length === 0) return 'No attempts recorded for this job yet.';
+        const lines = res.data.map((a: Record<string, unknown>) =>
+            `  Attempt #${a.attempt_number} [${a.status}] → HTTP ${a.response_status ?? 'N/A'} ` +
+            `(${a.duration_ms}ms, endpoint=${a.endpoint})`
+        );
+        return `${res.data.length} attempt(s):\n` + lines.join('\n') +
+            `\n\nFull details:\n${JSON.stringify(res.data, null, 2)}`;
     },
   },
 

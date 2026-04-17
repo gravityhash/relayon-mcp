@@ -125,6 +125,10 @@ export class RelayonClient {
     return this.request<{ data: { replayed_job_id: string; dlq_id: string } }>('POST', `/v1/dlq/${encodeURIComponent(id)}/replay`);
   }
 
+  async getJobAttempts(id: string): Promise<{ data: Array<Record<string, unknown>> }> {
+    return this.request<{ data: Array<Record<string, unknown>> }>('GET', `/v1/jobs/${encodeURIComponent(id)}/attempts`);
+  }
+
   // --- Health ---
 
   async health(): Promise<{ status: string; version: string; database: string }> {
