@@ -129,6 +129,25 @@ export class RelayonClient {
     return this.request<{ data: Array<Record<string, unknown>> }>('GET', `/v1/jobs/${encodeURIComponent(id)}/attempts`);
   }
 
+  // --- Triggers ---
+
+  async createTrigger(input: Record<string, unknown>): Promise<{ data: Record<string, unknown> }> {
+    return this.request<{ data: Record<string, unknown> }>('POST', '/v1/triggers', input);
+  }
+
+  async listTriggers(opts: { status?: string; limit?: number; offset?: number } = {}): Promise<{ data: Array<Record<string, unknown>>; pagination: Pagination }> {
+    const params = new URLSearchParams();
+    if (opts.status) params.set('status', opts.status);
+    if (opts.limit != null) params.set('limit', String(opts.limit));
+    if (opts.offset != null) params.set('offset', String(opts.offset));
+    const qs = params.toString();
+    return this.request<{ data: Array<Record<string, unknown>>; pagination: Pagination }>('GET', `/v1/triggers${qs ? `?${qs}` : ''}`);
+  }
+
+  async deleteTrigger(id: string): Promise<{ ok: boolean }> {
+    return this.request<{ ok: boolean }>('DELETE', `/v1/triggers/${encodeURIComponent(id)}`);
+  }
+
   // --- Health ---
 
   async health(): Promise<{ status: string; version: string; database: string }> {

@@ -260,6 +260,87 @@ export const TOOLS: ToolDef[] = [
       return `DLQ entry ${res.data.dlq_id} replayed as new job ${res.data.replayed_job_id}.`;
     },
   },
+
+  // ───────────────────────── create_trigger ─────────────────────────
+  {
+    name: 'create_trigger',
+    description: 'Create an inbound webhook trigger. When external services POST to the webhook URL, ' +
+        'Relayon creates a job from the trigger config, optionally merging the inbound payload.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name:       { type: 'string', description: 'Human-readable name for this trigger' },
+        endpoint:   { type: 'string', description: 'URL to call when the trigger fires' },
+        method:     { type: 'string', enum: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], default: 'POST' },
+        default_payload: { type: 'object', description: 'Default payload merged with inbound body', additionalProperties: true },
+        payload_mode: { type: 'string', enum: ['merge', 'replace', 'nest', 'ignore'], default: 'merge',
+            description: 'How to handle inbound body: merge (default), replace, nest under .inbound, or ignore' },
+        priority:   { type: 'integer', minimum: 1, maximum: 4, default: 3 },
+        webhook_secret: { type: 'string', description: 'Shared secret for verifying inbound signatures' },
+      },
+      required: ['name', 'endpoint'],
+    },
+    handler: async (client, args) => {
+      const res = await client.createTrigger(pickDefined({
+        name: args.name,
+        endpoint: args.endpoint,
+        method: args.method,
+        default_payload: args.default_payload,
+        payload_mode: args.payload_mode,
+        priority: args.priority,
+        webhook_secret: args.webhook_secret,
+        source: 'agent',
+      }));
+      const t = res.data;
+      return `Trigger created.\n` +
+          `  name:        ${t.name}\n` +
+          `  webhook_url: ${t.webhook_url}\n` +
+          `  webhook_id:  ${t.webhook_id}\n` +
+          `  endpoint:    ${t.endpoint}\n` +
+          `  status:      ${t.status}\n` +
+          `\nGive this webhook URL to external services. When they POST to it, a job will be created automatically.\n` +
+          `\nFull trigger:\n${JSON.stringify(t, null, 2)}`;
+    },
+  },
+  // ───────────────────────── list_triggers ─────────────────────────
+  {
+    name: 'list_triggers',
+    description: 'List inbound webhook triggers. Shows webhook URLs and invocation stats.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        status: { type: 'string', enum: ['active', 'paused'] },
+        limit:  { type: 'integer', minimum: 1, maximum: 100, default: 20 },
+        offset: { type: 'integer', minimum: 0, default: 0 },
+      },
+    },
+    handler: async (client, args) => {
+      const res = await client.listTriggers({
+        status: args.status as string | undefined,
+        limit: args.limit as number | undefined,
+        offset: args.offset as number | undefined,
+      });
+      if (res.data.length === 0) return `No triggers found. Total: ${res.pagination.total}.`;
+      const lines = res.data.map((t: Record<string, unknown>) =>
+          `  - [${t.status}] ${t.name} → ${t.endpoint} (webhook=${t.webhook_url}, invocations=${t.total_invocations})`
+      );
+      return `${res.pagination.total} trigger(s), showing ${res.data.length}:\n` + lines.join('\n');
+    },
+  },
+  // ───────────────────────── delete_trigger ─────────────────────────
+  {
+    name: 'delete_trigger',
+    description: 'Delete an inbound webhook trigger. The webhook URL stops accepting requests immediately.',
+    inputSchema: {
+      type: 'object',
+      properties: { id: { type: 'string', description: 'Trigger UUID' } },
+      required: ['id'],
+    },
+    handler: async (client, args) => {
+      await client.deleteTrigger(asString(args.id, 'id'));
+      return `Trigger ${args.id} deleted. The webhook URL is now inactive.`;
+    },
+  },
 ];
 
 /**
