@@ -2,6 +2,8 @@
 
 Model Context Protocol (MCP) server for Relayon.io. Exposes the Relayon job engine to Claude Desktop, Cursor, VS Code, and any other MCP-capable AI agent through a zero-dep stdio server.
 
+> **Hosted transports also available.** If you'd rather not install this package locally, Relayon serves the same tool surface over **streamable HTTP** (`POST https://api.relayon.io/mcp`) and **SSE** (`GET https://api.relayon.io/mcp/sse`). Same 13 tools, same API-key auth. See [docs → MCP → Hosted transports](https://doc.relayon.io/mcp/hosted-transports).
+
 ## What it does
 
 Runs locally next to your agent, speaks JSON-RPC 2.0 over stdio, and wraps the Relayon REST API. Every job it creates is tagged `source="agent"` so the dashboard can segregate agent-driven traffic from developer-driven traffic.
